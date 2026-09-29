@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>McNavigill</title>
+<meta name="description" content="Shortest, warmest and in-between walking routes across McGill's engineering quarter.">
+<style>
+  :root {
+    --bg: #f6f5f2; --panel: #ffffff; --ink: #1d1d1f; --muted: #6b6b70; --line: #e3e1dc;
+    --accent: #c8102e; --indoor: #1f4e79; --outdoor: #2e7d32;
+    --shortest: #d1495b; --warmest: #00798c; --custom: #6a4c93;
+    --ok: #2e7d32; --late: #c8102e; --map: #fbfaf8;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #151517; --panel: #1f1f22; --ink: #ececef; --muted: #a0a0a8; --line: #33333a;
+      --accent: #ff5a6e; --indoor: #7fb2e5; --outdoor: #7cc47f;
+      --shortest: #ff7a8a; --warmest: #4fc3d6; --custom: #b39ddb;
+      --ok: #7cc47f; --late: #ff7a8a; --map: #19191c;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+         font: 15px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  header { display: flex; align-items: baseline; gap: 14px; padding: 14px 20px;
+           border-bottom: 3px solid var(--accent); background: var(--panel); flex-wrap: wrap; }
+  header h1 { margin: 0; font-size: 22px; letter-spacing: .5px; color: var(--accent); }
+  header p { margin: 0; color: var(--muted); font-size: 14px; }
+  main { display: grid; grid-template-columns: minmax(300px, 380px) 1fr; gap: 16px; padding: 16px 20px;
+         max-width: 1200px; margin: 0 auto; }
+  @media (max-width: 820px) { main { grid-template-columns: 1fr; padding: 12px 16px; } }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
+  .stack > * + * { margin-top: 14px; }
+  label.field { display: block; font-size: 12px; text-transform: uppercase; letter-spacing: .6px;
+                color: var(--muted); margin-bottom: 4px; }
+  select, input[type=time] { width: 100%; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px;
+           background: var(--bg); color: var(--ink); font: inherit; }
+  .fromto { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: end; }
+  .fromto .col > * + * { margin-top: 10px; }
+  button { font: inherit; cursor: pointer; border-radius: 8px; border: 1px solid var(--line);
+           background: var(--bg); color: var(--ink); padding: 8px 12px; }
+  button:hover { border-color: var(--muted); }
+  .swap { height: 38px; width: 38px; padding: 0; font-size: 18px; margin-bottom: 26px; }
+  .modes { display: grid; grid-template-columns: repeat(3, 1fr); border: 1px solid var(--line);
+           border-radius: 8px; overflow: hidden; }
+  .modes button { border: 0; border-radius: 0; background: var(--bg); padding: 8px 4px; }
+  .modes button + button { border-left: 1px solid var(--line); }
+  .modes button[aria-pressed=true] { background: var(--ink); color: var(--panel); }
+  #customBox { display: none; }
+  #customBox.on { display: block; }
+  input[type=range] { width: 100%; accent-color: var(--custom); }
+  .hint { color: var(--muted); font-size: 13px; }
+  .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 16px; }
+  .stat b { display: block; font-size: 24px; line-height: 1.1; }
+  .stat span { color: var(--muted); font-size: 13px; }
+  .bar { height: 8px; border-radius: 4px; background: var(--indoor); overflow: hidden; margin-top: 12px; }
+  .bar i { display: block; height: 100%; background: var(--outdoor); }
+  .note { margin-top: 10px; font-weight: 600; }
+  .note.late { color: var(--late); } .note.ok { color: var(--ok); }
+  ol.steps { margin: 0; padding-left: 20px; }
+  ol.steps li { margin: 4px 0; }
+  ol.steps .k { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; }
+  .saved { list-style: none; margin: 0; padding: 0; }
+  .saved li { display: flex; gap: 8px; align-items: center; justify-content: space-between;
+              border-top: 1px solid var(--line); padding: 6px 0; }
+  .saved li:first-child { border-top: 0; }
+  .saved a { color: var(--ink); cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
+  .saved button { padding: 2px 8px; font-size: 13px; }
+  .mapcard { padding: 8px; display: flex; flex-direction: column; align-self: start; }
+  @media (min-width: 821px) { .mapcard { position: sticky; top: 12px; } }
+  svg text { paint-order: stroke; stroke: var(--map); stroke-width: 3px; stroke-linejoin: round; }
+  svg { width: 100%; height: auto; max-height: 78vh; background: var(--map); border-radius: 8px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 14px; padding: 8px 6px 2px; font-size: 13px; color: var(--muted); }
+  .legend i { display: inline-block; width: 22px; height: 0; border-top: 3px solid; vertical-align: middle; margin-right: 6px; }
+  h2 { margin: 0 0 8px; font-size: 15px; }
+  footer { max-width: 1200px; margin: 0 auto; padding: 4px 20px 24px; color: var(--muted); font-size: 13px; }
+  footer a { color: inherit; }
+</style>
+</head>
+<body>
+<header>
+  <h1>McNavigill</h1>
+  <p>Walking routes across McGill's engineering quarter, with as little of the winter as you like.</p>
+</header>
+
+<main>
+  <section class="stack" aria-label="Route planner">
+    <div class="card stack">
+      <div class="fromto">
+        <div class="col">
+          <div><label class="field" for="from">From</label><select id="from"></select></div>
+          <div><label class="field" for="to">To</label><select id="to"></select></div>
+        </div>
+        <button class="swap" id="swap" title="Swap start and destination" aria-label="Swap start and destination">⇅</button>
+      </div>
+      <div>
+        <span class="field" style="display:block;font-size:12px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:4px">Route</span>
+        <div class="modes" role="group" aria-label="Route type">
+          <button data-mode="shortest">Shortest</button>
+          <button data-mode="warmest">Warmest</button>
+          <button data-mode="custom">Custom</button>
+        </div>
+      </div>
+      <div id="customBox">
+        <label class="field" for="tradeoff">Time outside</label>
+        <input type="range" id="tradeoff" min="0" max="0" step="1" value="0">
+        <div class="hint" id="tradeoffHint"></div>
+      </div>
+      <div>
+        <label class="field" for="classTime">Class starts at (optional)</label>
+        <input type="time" id="classTime">
+      </div>
+    </div>
+
+    <div class="card" aria-live="polite">
+      <div class="stats">
+        <div class="stat"><b id="sMin">–</b><span>minutes walking</span></div>
+        <div class="stat"><b id="sArr">–</b><span>arrival if you leave now</span></div>
+        <div class="stat"><b id="sDist">–</b><span>total distance</span></div>
+        <div class="stat"><b id="sOut">–</b><span>outside</span></div>
+      </div>
+      <div class="bar" title="Share of the route outdoors"><i id="sBar" style="width:0"></i></div>
+      <div class="hint" id="sSplit" style="margin-top:6px"></div>
+      <div class="note" id="sNote"></div>
+    </div>
+
+    <div class="card">
+      <h2>Directions</h2>
+      <ol class="steps" id="steps"></ol>
+    </div>
+
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+        <h2 style="margin:0">Saved routes</h2>
+        <button id="save">Save this route</button>
+      </div>
+      <ul class="saved" id="saved" style="margin-top:8px"></ul>
+      <div class="hint" id="savedHint"></div>
+    </div>
+  </section>
+
+  <section class="card mapcard" aria-label="Map">
+    <svg id="map" role="img" aria-label="Campus network with the selected route"></svg>
+    <div class="legend">
+      <span><i style="border-color:var(--indoor)"></i>corridor or tunnel</span>
+      <span><i style="border-color:var(--outdoor);border-top-style:dashed"></i>outdoor path</span>
+      <span><i id="legRoute" style="border-color:var(--shortest);border-top-width:5px"></i>your route</span>
+    </div>
+  </section>
+</main>
+
+<footer>
+  Schematic map in metres, digitized from the team's campus sketch. Routes come from the
+  McNavigill Python package (Dijkstra and a Pareto search), exported by
+  <code>scripts/build_web.py</code>. Walking speed 80 m/min.
+</footer>
+
+<script src="data.js"></script>
+<script>
+(() => {
+  const D = window.MCNAV;
+  const $ = id => document.getElementById(id);
+  const SVGNS = "http://www.w3.org/2000/svg";
+  const STORE = "mcnavigill.saved";
+  const state = { from: null, to: null, mode: "shortest", idx: 0 };
+
+  const edgeByPair = new Map();
+  for (const e of D.edges) edgeByPair.set(key(e.u, e.v), e);
+  function key(a, b) { return a < b ? a + "|" + b : b + "|" + a; }
+  const labelOf = Object.fromEntries(D.entrances.map(e => [e.id, e.label]));
+
+  // ---------- controls
+  for (const sel of [$("from"), $("to")]) {
+    for (const e of D.entrances) sel.add(new Option(e.label, e.id));
+  }
+  function readHash() {
+    const h = new URLSearchParams(location.hash.slice(1));
+    const ok = id => id && labelOf[id];
+    state.from = ok(h.get("from")) ? h.get("from") : (D.entrances.find(e => /Macdonald Eng/.test(e.label)) || D.entrances[0]).id;
+    state.to = ok(h.get("to")) ? h.get("to") : (D.entrances.find(e => /Maass/.test(e.label)) || D.entrances[1]).id;
+    if (state.to === state.from) state.to = D.entrances.find(e => e.id !== state.from).id;
+    state.mode = ["shortest", "warmest", "custom"].includes(h.get("mode")) ? h.get("mode") : "shortest";
+    state.idx = parseInt(h.get("i") || "0", 10) || 0;
+  }
+  function writeHash() {
+    const p = new URLSearchParams({ from: state.from, to: state.to, mode: state.mode });
+    if (state.mode === "custom") p.set("i", state.idx);
+    history.replaceState(null, "", "#" + p.toString());
+  }
+
+  $("from").onchange = () => { state.from = $("from").value; fixSame("from"); state.idx = 0; update(); };
+  $("to").onchange = () => { state.to = $("to").value; fixSame("to"); state.idx = 0; update(); };
+  $("swap").onclick = () => { [state.from, state.to] = [state.to, state.from]; state.idx = 0; update(); };
+  for (const b of document.querySelectorAll(".modes button")) {
+    b.onclick = () => { state.mode = b.dataset.mode; update(); };
+  }
+  $("tradeoff").oninput = () => { state.idx = +$("tradeoff").value; update(); };
+  $("classTime").oninput = () => update();
+  function fixSame(changed) {
+    if (state.from !== state.to) return;
+    const other = D.entrances.find(e => e.id !== state.from).id;
+    if (changed === "from") state.to = other; else state.from = other;
+  }
+
+  // ---------- route helpers
+  function front() { return D.routes[state.from + "|" + state.to]; }
+  function current() {
+    const f = front();
+    if (state.mode === "shortest") return { r: f[0], colour: "var(--shortest)" };
+    if (state.mode === "warmest") return { r: f[f.length - 1], colour: "var(--warmest)" };
+    state.idx = Math.min(Math.max(state.idx, 0), f.length - 1);
+    return { r: f[state.idx], colour: "var(--custom)" };
+  }
+  function polyline(nodes) {
+    const pts = [];
+    for (let i = 0; i + 1 < nodes.length; i++) {
+      const e = edgeByPair.get(key(nodes[i], nodes[i + 1]));
+      const seg = e.u === nodes[i] ? e.p : e.p.slice().reverse();
+      pts.push(...(pts.length ? seg.slice(1) : seg));
+    }
+    return pts;
+  }
+  function steps(nodes) {
+    // one step per indoor or outdoor stretch; indoor stretches list the buildings passed
+    const out = [];
+    for (let i = 0; i + 1 < nodes.length; i++) {
+      const a = nodes[i], b = nodes[i + 1];
+      const e = edgeByPair.get(key(a, b));
+      let last = out[out.length - 1];
+      if (!last || last.k !== e.k) { last = { k: e.k, L: 0, via: [] }; out.push(last); }
+      last.L += e.L;
+      if (e.k === "indoor") for (const n of [a, b]) {
+        const bld = D.nodes[n].b;
+        if (bld && !last.via.includes(bld)) last.via.push(bld);
+      }
+    }
+    return out;
+  }
+  const fmtM = m => Math.round(m) + " m";
+  const minutes = m => m / D.speed;
+
+  // ---------- rendering
+  function update() {
+    $("from").value = state.from; $("to").value = state.to;
+    for (const b of document.querySelectorAll(".modes button")) b.setAttribute("aria-pressed", b.dataset.mode === state.mode);
+    const f = front();
+    const box = $("customBox");
+    box.classList.toggle("on", state.mode === "custom");
+    $("tradeoff").max = f.length - 1;
+    $("tradeoff").value = state.idx;
+    const { r, colour } = current();
+    $("tradeoffHint").textContent = f.length > 1
+      ? `Route ${state.idx + 1} of ${f.length} that no other route beats on both distance and time outside. Slide right to stay in longer.`
+      : "Only one route here is worth taking.";
+
+    const mins = minutes(r.L), outMin = minutes(r.O), inMin = mins - outMin;
+    const arrive = new Date(Date.now() + Math.ceil(mins) * 60000);
+    $("sMin").textContent = Math.max(1, Math.round(mins));
+    $("sArr").textContent = arrive.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+    $("sDist").textContent = fmtM(r.L);
+    $("sOut").textContent = fmtM(r.O);
+    $("sBar").style.width = (r.L ? 100 * r.O / r.L : 0) + "%";
+    $("sSplit").textContent = `about ${Math.round(inMin)} min indoors, ${Math.round(outMin)} min outside`;
+
+    const note = $("sNote"), t = $("classTime").value;
+    note.className = "note"; note.textContent = "";
+    if (t) {
+      const [h, m] = t.split(":").map(Number);
+      const cls = new Date(); cls.setHours(h, m, 0, 0);
+      const diff = Math.round((cls - arrive) / 60000);
+      if (diff < 0) { note.classList.add("late"); note.textContent = `You would arrive about ${-diff} min late.`; }
+      else { note.classList.add("ok"); note.textContent = diff === 0 ? "You would arrive right on time." : `${diff} min to spare.`; }
+    }
+
+    const ol = $("steps"); ol.innerHTML = "";
+    const add = (html, col) => { const li = document.createElement("li");
+      li.innerHTML = (col ? `<span class="k" style="background:${col}"></span>` : "") + html; ol.appendChild(li); };
+    add(`Start at <b>${labelOf[state.from]}</b>`);
+    for (const s of steps(r.n)) {
+      if (s.k === "indoor") add(`Indoors, ${fmtM(s.L)}${s.via.length ? " (" + s.via.join(", ") + ")" : ""}`, "var(--indoor)");
+      else add(`Outside, ${fmtM(s.L)}`, "var(--outdoor)");
+    }
+    add(`Arrive at <b>${labelOf[state.to]}</b>`);
+
+    $("legRoute").style.borderColor = colour;
+    drawMap(r, colour);
+    renderSaved();
+    writeHash();
+  }
+
+  function drawMap(route, colour) {
+    const svg = $("map");
+    const xs = Object.values(D.nodes).map(n => n.x), ys = Object.values(D.nodes).map(n => -n.y);
+    const pad = 28, minX = Math.min(...xs) - pad, minY = Math.min(...ys) - pad;
+    const w = Math.max(...xs) - Math.min(...xs) + 2 * pad + 90, h = Math.max(...ys) - Math.min(...ys) + 2 * pad;
+    svg.setAttribute("viewBox", `${minX} ${minY} ${w} ${h}`);
+    svg.innerHTML = "";
+    const el = (tag, attrs, parent = svg) => { const x = document.createElementNS(SVGNS, tag);
+      for (const [k, v] of Object.entries(attrs)) x.setAttribute(k, v); parent.appendChild(x); return x; };
+    const pts = p => p.map(([x, y]) => `${x},${-y}`).join(" ");
+
+    for (const e of D.edges) {
+      el("polyline", { points: pts(e.p), fill: "none", stroke: e.k === "indoor" ? "var(--indoor)" : "var(--outdoor)",
+        "stroke-width": e.k === "indoor" ? 3 : 2, "stroke-dasharray": e.k === "indoor" ? "" : "5 4",
+        "stroke-linecap": "round", "stroke-linejoin": "round", opacity: .45 });
+    }
+    el("polyline", { points: pts(polyline(route.n)), fill: "none", stroke: colour, "stroke-width": 6,
+      "stroke-linecap": "round", "stroke-linejoin": "round", opacity: .92 });
+
+    const named = new Set();
+    for (const ent of D.entrances) {
+      const n = D.nodes[ent.id];
+      const isEnd = ent.id === state.from || ent.id === state.to;
+      const c = el("circle", { cx: n.x, cy: -n.y, r: isEnd ? 7 : 5, fill: isEnd ? (ent.id === state.from ? "var(--ok)" : "var(--accent)") : "var(--panel)",
+        stroke: "var(--ink)", "stroke-width": 1.2, style: "cursor:pointer" });
+      const title = el("title", {}, c); title.textContent = ent.label + " — click to set as destination, shift-click as start";
+      c.addEventListener("click", ev => {
+        if (ev.shiftKey) state.from = ent.id; else state.to = ent.id;
+        fixSame(ev.shiftKey ? "from" : "to"); state.idx = 0; update();
+      });
+      if (!named.has(n.b)) {
+        named.add(n.b);
+        const t = el("text", { x: n.x + 9, y: -n.y + 4, "font-size": 10.5, fill: "var(--ink)" });
+        t.textContent = n.b;
+      }
+    }
+  }
+
+  // ---------- saved routes (browser storage; optional)
+  function loadSaved() { try { return JSON.parse(localStorage.getItem(STORE) || "[]"); } catch { return []; } }
+  function storeSaved(list) { try { localStorage.setItem(STORE, JSON.stringify(list)); return true; } catch { return false; } }
+  function describe(s) {
+    const m = s.mode === "custom" ? `custom ${s.idx + 1}` : s.mode;
+    return `${labelOf[s.from]} → ${labelOf[s.to]} (${m})`;
+  }
+  $("save").onclick = () => {
+    const list = loadSaved().filter(s => !(s.from === state.from && s.to === state.to && s.mode === state.mode && s.idx === state.idx));
+    list.unshift({ from: state.from, to: state.to, mode: state.mode, idx: state.idx });
+    $("savedHint").textContent = storeSaved(list.slice(0, 8)) ? "" : "This browser is not letting the page store routes.";
+    renderSaved();
+  };
+  function renderSaved() {
+    const ul = $("saved"); ul.innerHTML = "";
+    const list = loadSaved().filter(s => labelOf[s.from] && labelOf[s.to]);
+    if (!list.length) { ul.innerHTML = '<li class="hint">Routes you save appear here.</li>'; return; }
+    list.forEach((s, i) => {
+      const li = document.createElement("li");
+      const a = document.createElement("a"); a.textContent = describe(s);
+      a.onclick = () => { Object.assign(state, s); update(); };
+      const del = document.createElement("button"); del.textContent = "Remove"; del.setAttribute("aria-label", "Remove " + describe(s));
+      del.onclick = () => { const l = loadSaved(); l.splice(i, 1); storeSaved(l); renderSaved(); };
+      li.append(a, del); ul.appendChild(li);
+    });
+  }
+
+  readHash();
+  update();
+  window.addEventListener("hashchange", () => { readHash(); update(); });
+})();
+</script>
+</body>
+</html>

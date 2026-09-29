@@ -1,0 +1,34 @@
+id,kind,building,x_px,y_px
+1,entrance,McConnell Engineering,775,372
+2,junction,McConnell Engineering,775,445
+3,entrance,Macdonald Engineering,490,515
+4,entrance,Macdonald-Harrington,560,678
+5,entrance,Adams,845,742
+7,waypoint,,543,760
+9,junction,Macdonald-Stewart Library,590,825
+10,entrance,Macdonald-Stewart Library,648,852
+11,waypoint,,502,885
+12,entrance,Burnside Hall,525,950
+13,waypoint,,505,1005
+14,entrance,Otto Maass Chemistry,645,1077
+15,waypoint,,555,1075
+16,junction,Otto Maass Chemistry,590,1105
+17,entrance,Otto Maass Chemistry,770,1105
+jA,waypoint,,495,462
+jB,junction,Macdonald Engineering,540,443
+jC,junction,Macdonald Engineering,540,515
+jD,waypoint,,775,356
+jE,waypoint,,830,335
+jF,junction,Macdonald-Harrington,645,672
+jG,junction,Macdonald-Harrington,645,745
+jH,junction,Adams,775,745
+jI,junction,Macdonald-Stewart Library,645,825
+jJ,waypoint,,490,815
+jK,waypoint,,650,885
+jL,waypoint,,500,950
+jM,junction,Burnside Hall,540,1105
+jN,waypoint,,768,1082
+jO,waypoint,,738,968
+jP,waypoint,,850,968
+jQ,junction,Burnside Hall,525,825
+jS,junction,Otto Maass Chemistry,645,1105

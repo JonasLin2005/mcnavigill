@@ -1,0 +1,42 @@
+u,v,kind,via
+jB,jC,indoor,
+jB,2,indoor,
+1,2,indoor,
+2,jH,indoor,
+jH,jG,indoor,
+jF,jG,indoor,
+jG,jI,indoor,
+jI,9,indoor,
+9,jQ,indoor,
+jQ,12,indoor,
+12,jM,indoor,530 1100
+jM,16,indoor,
+16,jS,indoor,
+jS,17,indoor,
+jC,3,indoor,
+jF,4,indoor,
+jH,5,indoor,
+jI,10,indoor,
+12,jL,indoor,
+jM,15,indoor,
+jS,14,indoor,
+17,jN,indoor,
+1,jD,indoor,
+jA,3,outdoor,
+3,4,outdoor,485 560;510 610;555 660
+4,7,outdoor,560 705
+7,jJ,outdoor,520 795
+jJ,11,outdoor,497 850
+11,jL,outdoor,
+jL,13,outdoor,
+13,15,outdoor,510 1040
+15,14,outdoor,
+14,jN,outdoor,
+jN,jO,outdoor,
+jO,jP,outdoor,
+jP,5,outdoor,
+5,jE,outdoor,
+jE,jD,outdoor,
+jD,jA,outdoor,
+10,jK,outdoor,
+jK,11,outdoor,
